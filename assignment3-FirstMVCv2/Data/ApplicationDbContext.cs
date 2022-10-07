@@ -12,5 +12,6 @@ namespace assignment3_FirstMVCv2.Data
         }
         public DbSet<assignment3_FirstMVCv2.Models.Movie> Movie { get; set; }
         public DbSet<assignment3_FirstMVCv2.Models.Actor> Actor { get; set; }
+        public DbSet<assignment3_FirstMVCv2.Models.ActorMovie> ActorMovie { get; set; }
     }
 }
