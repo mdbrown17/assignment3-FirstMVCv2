@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using assignment3_FirstMVCv2.Data;
 using assignment3_FirstMVCv2.Models;
+using Assignment3_FirstMVC.Models;
+using Tweetinvi;
+using VaderSharp2;
 
 namespace assignment3_FirstMVCv2.Controllers
 {
@@ -18,7 +21,18 @@ namespace assignment3_FirstMVCv2.Controllers
         {
             _context = context;
         }
+        public async Task<IActionResult> GetPhoto(int id)
+        {
+            var actor = await _context.Actor
+                 .FirstOrDefaultAsync(m => m.Id == id);
+            if (actor == null)
+            {
+                return NotFound();
+            }
+            var imageData = actor.Photo;
 
+            return File(imageData, "image/jpg");
+        }
         // GET: Actors
         public async Task<IActionResult> Index()
         {
@@ -40,7 +54,25 @@ namespace assignment3_FirstMVCv2.Controllers
                 return NotFound();
             }
 
-            return View(actor);
+            ActorDetailsVM actorDetailsVM = new ActorDetailsVM();
+            actorDetailsVM.actor = actor;
+            actorDetailsVM.Tweets = new List<ActorTweets>();
+
+            var userClient = new TwitterClient("w5bxWbjaGX5SVQadf5BydfKxU", "Bpg9117FFprnciUGb4b0q4I1fnbb3fN8lpSzS7N4vJInCpNxRw", "1577812753317875712-on1iqcHDltw2Z0ESzXPDw1jV63803B", "4mp0ICs4Xht4hCZcXvOs23BOyKRYF0cR8zMsBb5b3ymGR");
+            var searchResponse = await userClient.SearchV2.SearchTweetsAsync(actor.Name);
+            var tweets = searchResponse.Tweets;
+            var analyzer = new SentimentIntensityAnalyzer();
+
+            foreach (var tweetText in tweets)
+            {
+                var tweet = new ActorTweets();
+                tweet.TweetText = tweetText.Text;
+                var results = analyzer.PolarityScores(tweet.TweetText);
+                tweet.Sentiment = results.Compound;
+                actorDetailsVM.Tweets.Add(tweet);
+            }
+
+            return View(actorDetailsVM);
         }
 
         // GET: Actors/Create
@@ -54,10 +86,16 @@ namespace assignment3_FirstMVCv2.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Gender,Age,ImdbHyperLink,Photo")] Actor actor)
+        public async Task<IActionResult> Create([Bind("Id,Name,Gender,Age,ImdbHyperLink")] Actor actor, IFormFile? Photo)
         {
             if (ModelState.IsValid)
             {
+                if (Photo != null && Photo.Length > 0)
+                {
+                    var memoryStream = new MemoryStream();
+                    await Photo.CopyToAsync(memoryStream);
+                    actor.Photo = memoryStream.ToArray();
+                }
                 _context.Add(actor);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));

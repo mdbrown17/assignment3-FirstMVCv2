@@ -1,18 +1,18 @@
-﻿using Assignment3_FirstMVCv2.Models;
+﻿using assignment3_FirstMVCv2.Models;
 
-namespace assignment3_FirstMVCv2.Models
+namespace Assignment3_FirstMVC.Models
 {
-    public class MovieDetailsVM
+    public class ActorDetailsVM
     {
-        public Movie movie { get; set; }
-        public List<MovieTweets>? Tweets { get; set; }
+        public Actor actor { get; set; }
+        public List<ActorTweets>? Tweets { get; set; }
         public double AverageTweetSentiment()
         {
             if (Tweets == null) return 0;
 
             int validTweets = 0;
             double totalTweetScore = 0;
-            foreach (MovieTweets tweet in Tweets)
+            foreach (ActorTweets tweet in Tweets)
             {
                 if (tweet.Sentiment != 0)
                 {
